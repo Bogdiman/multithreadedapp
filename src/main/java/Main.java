@@ -45,6 +45,8 @@ public class Main {
         while (true) {
             Socket clientSocket = serverSocket.accept();
 
+            long startTime = System.currentTimeMillis();
+
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             int listSize = in.readInt();
             populateList(list, listSize);
@@ -71,6 +73,10 @@ public class Main {
             }
 
             System.out.println("Answer is " + sum);
+
+            long endTime = System.currentTimeMillis();
+            long totalTime = endTime - startTime;
+
             executorService.shutdown();
 
             in.close();
@@ -79,6 +85,7 @@ public class Main {
             logger.info("-----------------------------------------");
             logger.info("MAP REDUCE: This iteration used as avg of " + avgCpuUsage * 100 + "% of CPU");
             logger.info("MAP REDUCE: This iteration used an avg of RAM usage of " + avgRamUsage);
+            logger.info("MAP REDUCE: Time needed is " + totalTime + " (msec)");
             logger.info("-----------------------------------------");
         }
     }
