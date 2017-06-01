@@ -1,3 +1,10 @@
+import com.sun.management.OperatingSystemMXBean;
+import org.apache.log4j.Logger;
+
+import java.io.DataInputStream;
+import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -11,37 +18,68 @@ import java.util.concurrent.Future;
  */
 public class Main {
 
-    public static void populateList(List<Integer> list) {
+    private static Logger logger = Logger.getLogger(Main.class);
+
+    private static OperatingSystemMXBean operatingSystemMXBean =
+            (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+    public static void populateList(List<Integer> list, int listSize) {
         Random r = new Random();
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < listSize; i++) {
             list.add(r.nextInt(101));
         }
     }
 
     public static void main(String[] args) throws Exception {
         List<Integer> list = new ArrayList<>();
-        populateList(list);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(25);
+        double avgCpuUsage = 0;
+        long avgRamUsage = 0;
 
-        List<Callable<Integer>> todos = new ArrayList<>();
+        long ramUsage;
+        double cpuUsage;
 
-        for (int i = 0; i < 25; i++) {
-            Worker worker = new Worker(list, i);
-            todos.add(worker);
+        int port = 9875;
+
+        ServerSocket serverSocket = new ServerSocket(port);
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+
+            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+            int listSize = in.readInt();
+            populateList(list, listSize);
+
+            ExecutorService executorService = Executors.newFixedThreadPool(25);
+
+            List<Callable<Integer>> todos = new ArrayList<>();
+
+            for (int i = 0; i < 25; i++) {
+                Worker worker = new Worker(list, i);
+                todos.add(worker);
+            }
+
+            List<Future<Integer>> resultList = executorService.invokeAll(todos);
+
+            cpuUsage = operatingSystemMXBean.getProcessCpuLoad();
+            avgCpuUsage += cpuUsage;
+            ramUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+            avgRamUsage += ramUsage;
+
+            int sum = 0;
+            for (int i = 0; i < resultList.size(); i++) {
+                sum += resultList.get(0).get();
+            }
+
+            System.out.println("Answer is " + sum);
+            executorService.shutdown();
+
+            in.close();
+            clientSocket.close();
+
+            logger.info("-----------------------------------------");
+            logger.info("MAP REDUCE: This iteration used as avg of " + avgCpuUsage * 100 + "% of CPU");
+            logger.info("MAP REDUCE: This iteration used an avg of RAM usage of " + avgRamUsage);
+            logger.info("-----------------------------------------");
         }
-
-        List<Future<Integer>> resultList = executorService.invokeAll(todos);
-
-        System.out.println("Answer is " + resultList.stream().mapToInt(x -> {
-                try {
-                    return x.get();
-                } catch (Exception e) {
-
-                }
-                return 0;
-            }).sum()
-        );
-        executorService.shutdown();
     }
 }
