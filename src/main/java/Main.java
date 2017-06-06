@@ -31,8 +31,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        List<Integer> list = new ArrayList<>();
-
         double avgCpuUsage = 0;
         long avgRamUsage = 0;
 
@@ -49,6 +47,7 @@ public class Main {
 
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             int listSize = in.readInt();
+            List<Integer> list = new ArrayList<>();
             populateList(list, listSize);
 
             ExecutorService executorService = Executors.newFixedThreadPool(25);
@@ -69,7 +68,7 @@ public class Main {
 
             int sum = 0;
             for (int i = 0; i < resultList.size(); i++) {
-                sum += resultList.get(0).get();
+                sum += resultList.get(i).get();
             }
 
             System.out.println("Answer is " + sum);
