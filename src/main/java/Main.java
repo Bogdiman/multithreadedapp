@@ -31,8 +31,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        double avgCpuUsage = 0;
-        long avgRamUsage = 0;
 
         long ramUsage;
         double cpuUsage;
@@ -62,9 +60,7 @@ public class Main {
             List<Future<Integer>> resultList = executorService.invokeAll(todos);
 
             cpuUsage = operatingSystemMXBean.getProcessCpuLoad();
-            avgCpuUsage += cpuUsage;
             ramUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-            avgRamUsage += ramUsage;
 
             int sum = 0;
             for (int i = 0; i < resultList.size(); i++) {
@@ -82,8 +78,8 @@ public class Main {
             clientSocket.close();
 
             logger.info("-----------------------------------------");
-            logger.info("MAP REDUCE: This iteration used as avg of " + avgCpuUsage * 100 + "% of CPU");
-            logger.info("MAP REDUCE: This iteration used an avg of RAM usage of " + avgRamUsage);
+            logger.info("MAP REDUCE: This iteration used as avg of " + cpuUsage * 100 + "% of CPU");
+            logger.info("MAP REDUCE: This iteration used an avg of RAM usage of " + ramUsage);
             logger.info("MAP REDUCE: Time needed is " + totalTime + " (msec)");
             logger.info("-----------------------------------------");
         }
