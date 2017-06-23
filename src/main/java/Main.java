@@ -32,14 +32,14 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        long ramUsage;
-        double cpuUsage;
-
         int port = 9875;
 
         ServerSocket serverSocket = new ServerSocket(port);
         while (true) {
             Socket clientSocket = serverSocket.accept();
+
+            long ramUsage;
+            double cpuUsage;
 
             long startTime = System.currentTimeMillis();
 
